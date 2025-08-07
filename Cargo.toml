@@ -4,3 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+bitcoin = "0.32.7"
+
+[dependencies.secp256k1-musig]
+package = "secp256k1"
+git = "https://github.com/rust-bitcoin/rust-secp256k1.git"
+rev = "72822e16b1433337baceb0abb5134cc24a062adb"
+features = [ "serde" ]
