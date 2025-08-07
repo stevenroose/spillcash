@@ -11,6 +11,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 
+use crate::cashu;
+
 #[derive(Clone)]
 struct AppState {}
 
@@ -46,7 +48,8 @@ struct TokenRequest {
 }
 
 async fn get_token(Json(payload): Json<TokenRequest>) -> Json<serde_json::Value> {
+    let token = cashu::get_token(payload.amount).await.unwrap();
     Json(json!({
-        "token": "adsf",
+        "token": token.to_string(),
     }))
 }
