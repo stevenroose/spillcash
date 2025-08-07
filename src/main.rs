@@ -1,12 +1,9 @@
 use crate::cashu::{get_token, mint};
 
 mod cashu;
-<<<<<<< Updated upstream
-mod tx;
 mod musig;
-=======
+mod tx;
 mod web;
->>>>>>> Stashed changes
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
