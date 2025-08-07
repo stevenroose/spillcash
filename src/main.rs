@@ -11,7 +11,7 @@ mod web;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialize cashu operations
-    mint(None).await?;
+    mint(Some(100_000)).await?;
     println!("SpillCash initialized!");
 
     // Create and start the web server
