@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import Bar from './Bar.jsx'
+
+const apiUrl = 'http://localhost:3000';
 
 const fundingAmount = 100_000;
 const mintAmount = 10_000;
@@ -14,6 +16,22 @@ function App() {
   const [rawTx, setRawTx] = useState('');
   const [state, setState] = useState(states.Funding);
   const [note, setNote] = useState(undefined);
+
+  const [fundingAddress, setFundingAddress] = useState('');
+
+  useState(() => {
+    const fetchAddress = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/address`);
+        const data = await response.json();
+        setFundingAddress(data.address);
+      } catch (error) {
+        console.error('Failed to fetch funding address:', error);
+      }
+    };
+    
+    fetchAddress();
+  }, []);
 
   const [ourAmount, setOurAmount] = useState(fundingAmount);
 
@@ -29,7 +47,7 @@ function App() {
               <h2>Funding address</h2>
       <textarea 
         disabled={true}
-        value={"bc1"}
+        value={fundingAddress}
         placeholder=""
         style={{
           width: '100%',
@@ -59,8 +77,26 @@ function App() {
       />
       <div style={{ height: '30px' }}></div>
       <button 
-        onClick={() => {
-          setState(states.Submitted);
+        onClick={async () => {
+          try {
+            const response = await fetch(`${apiUrl}/tx`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ tx: rawTx }),
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              console.log('Transaction submitted:', result);
+              setState(states.Submitted);
+            } else {
+              console.error('Failed to submit transaction');
+            }
+          } catch (error) {
+            console.error('Error submitting transaction:', error);
+          }
         }}
         style={{
           padding: '12px 24px',
@@ -85,7 +121,17 @@ function App() {
           <h2>Create ecash</h2>
       <Bar totalAmount={fundingAmount} ourAmount={ourAmount} />
                 <button 
-        onClick={() => {
+        onClick={async () => {
+          const response = await fetch(`${apiUrl}/token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ amount: mintAmount }),
+          });
+          
+          const data = await response.json();
+          setNote(data.token);
           setOurAmount(ourAmount - mintAmount);
         }}
         style={{
@@ -107,7 +153,7 @@ function App() {
       <div style={{ height: '30px' }}></div>
 
       {note !== undefined && (
-        <>
+      <>
           <h2>Note</h2>
           <textarea 
             disabled={true}
@@ -119,8 +165,36 @@ function App() {
               fontSize: '16px',
               border: '2px solid #ccc',
               borderRadius: '8px',
+              alignSelf: 'center'
             }}
           />
+          <button 
+            onClick={() => {
+              navigator.clipboard.writeText(note);
+              // Optional: Add visual feedback
+              const button = event.target;
+              const originalText = button.textContent;
+              button.textContent = 'Copied!';
+              setTimeout(() => {
+                button.textContent = originalText;
+              }, 1000);
+            }}
+            style={{
+              marginTop: '10px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              alignSelf: 'center'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+          >
+            Copy Note
+          </button>
         </>
       )}
         </>
