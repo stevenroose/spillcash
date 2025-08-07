@@ -101,5 +101,5 @@ pub fn update(
 }
 
 pub fn tx_json(tx: &Transaction) -> String {
-	serde_json::to_string(&hal::GetInfo::get_info(tx, Network::Regtest)).unwrap()
+	serde_json::to_string_pretty(&hal::GetInfo::get_info(tx, Network::Regtest)).unwrap()
 }
