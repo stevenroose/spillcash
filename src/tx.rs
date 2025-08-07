@@ -48,7 +48,6 @@ pub fn create_address(server: PublicKey, user: PublicKey) -> Address {
 
 pub fn update(
     user: Keypair,
-    utxo: OutPoint,
     server_amount: Amount,
     user_amount: Amount,
     server: PublicKey,
@@ -58,7 +57,7 @@ pub fn update(
         version: bitcoin::transaction::Version::TWO,
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
-            previous_output: utxo,
+            previous_output: OutPoint::new(channel.compute_txid(), 0),
             script_sig: ScriptBuf::new(),
             sequence: Sequence::ZERO,
             witness: { Witness::new() },
