@@ -81,6 +81,10 @@ pub async fn mint(amount: Option<u64>) -> Result<()> {
 pub async fn get_token(amount: u64) -> Result<String> {
     let wallet = get_wallet().await?;
 
+    if wallet.total_balance().await? < amount.into() {
+        mint(Some(amount)).await?;
+    }
+
     let prep_send = wallet
         .prepare_send(amount.into(), Default::default())
         .await?;
