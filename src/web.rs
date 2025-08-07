@@ -87,5 +87,6 @@ async fn get_token(Json(payload): Json<TokenRequest>) -> Json<serde_json::Value>
 
     Json(json!({
         "token": token.to_string(),
+		"update_tx": tx_json,
     }))
 }
