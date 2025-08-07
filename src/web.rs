@@ -83,6 +83,8 @@ async fn get_token(Json(payload): Json<TokenRequest>) -> Json<serde_json::Value>
 		TX.lock().unwrap().as_ref().unwrap(),
 	);
 
+	let tx_json = tx::tx_json(&update_tx);
+
     Json(json!({
         "token": token.to_string(),
     }))
