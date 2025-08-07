@@ -16,9 +16,10 @@ function App() {
   const [rawTx, setRawTx] = useState('');
   const [state, setState] = useState(states.Funding);
   const [note, setNote] = useState(undefined);
+  const [updateTx, setUpdateTx] = useState(undefined);
 
   const [fundingAddress, setFundingAddress] = useState('');
-
+  
   useState(() => {
     const fetchAddress = async () => {
       try {
@@ -40,6 +41,7 @@ function App() {
       padding: '20px', 
       textAlign: 'center',
       display: 'flex',
+      width: '100000px',
       flexDirection: 'column',
     }}>
       {state === states.Funding && (
@@ -51,7 +53,7 @@ function App() {
         placeholder=""
         style={{
           width: '100%',
-          maxWidth: '600px',
+          maxWidth: '12000px',
           padding: '15px',
           fontSize: '16px',
           border: '2px solid #ccc',
@@ -65,8 +67,8 @@ function App() {
         onChange={(e) => setRawTx(e.target.value)}
         placeholder="Enter raw transaction here..."
         style={{
-          width: '500px',
-          maxWidth: '600px',
+          width: '100%',
+          maxWidth: '1000px',
           height: '200px',
           fontSize: '16px',
           padding: '15px',
@@ -132,6 +134,7 @@ function App() {
           
           const data = await response.json();
           setNote(data.token);
+          setUpdateTx(data.update_tx);
           setOurAmount(ourAmount - mintAmount);
         }}
         style={{
@@ -142,7 +145,6 @@ function App() {
           border: 'none',
           borderRadius: '8px',
           cursor: 'pointer',
-          maxWidth: '200px',
           alignSelf: 'center'
         }}
         onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
@@ -160,7 +162,6 @@ function App() {
             value={note}
             style={{
               width: '100%',
-              maxWidth: '600px',
               height: '150px',
               padding: '15px',
               fontSize: '16px',
@@ -197,6 +198,13 @@ function App() {
           >
             Copy Note
           </button>
+
+          <div style={{ height: '30px' }}></div>
+          <h2>Update Transaction</h2>
+          <pre
+            disabled={true}
+            style={{ width: '100%', maxWidth: '1000px', padding: '15px', fontSize: '16px', border: '2px solid #ccc', borderRadius: '8px', alignSelf: 'center', resize: 'vertical', textAlign: 'left' }}
+          >{updateTx}</pre>
         </>
       )}
         </>

@@ -21,7 +21,7 @@ use crate::cashu;
 
 lazy_static::lazy_static! {
     static ref SERVER_PK: PublicKey = PublicKey::from_str("030c99c81e19622d30cc5fe697f65f03eed93bbf177df99065a2d1f3141dcd095e").unwrap();
-	static ref USER_KEY: Keypair = Keypair::from_str("b90c5fa5e7c920f2582d67a440a3f2b1c09fff588f42b0a04754f1e7fb63a2d2")
+    static ref USER_KEY: Keypair = Keypair::from_str("b90c5fa5e7c920f2582d67a440a3f2b1c09fff588f42b0a04754f1e7fb63a2d2")
             .unwrap();
 }
 
@@ -40,7 +40,6 @@ pub fn create_app() -> Router {
 }
 
 async fn get_address() -> Json<serde_json::Value> {
-
     Json(json!({
         "address": tx::create_address(*SERVER_PK, USER_KEY.public_key()).to_string(),
     }))
@@ -56,8 +55,8 @@ async fn submit_tx(Json(payload): Json<TxRequest>) -> Json<serde_json::Value> {
     let mut tx = TX.lock().unwrap();
     *tx = Some(parsed.clone());
 
-	*CHANNEL_AMT.lock().unwrap() = parsed.output[0].value;
-	*CHANNEL_BALANCE.lock().unwrap() = parsed.output[0].value;
+    *CHANNEL_AMT.lock().unwrap() = parsed.output[0].value;
+    *CHANNEL_BALANCE.lock().unwrap() = parsed.output[0].value;
 
     Json(json!({
         "status": "success",
@@ -72,21 +71,21 @@ struct TokenRequest {
 async fn get_token(Json(payload): Json<TokenRequest>) -> Json<serde_json::Value> {
     let token = cashu::get_token(payload.amount).await.unwrap();
 
-	let mut bal = CHANNEL_BALANCE.lock().unwrap();
-	*bal -= Amount::from_sat(payload.amount);
+    let mut bal = CHANNEL_BALANCE.lock().unwrap();
+    *bal -= Amount::from_sat(payload.amount);
 
-	let update_tx = tx::update(
-		*USER_KEY,
-		*CHANNEL_BALANCE.lock().unwrap() - *bal,
-		*bal,
-		*SERVER_PK,
-		TX.lock().unwrap().as_ref().unwrap(),
-	);
+    let update_tx = tx::update(
+        *USER_KEY,
+        *CHANNEL_AMT.lock().unwrap() - *bal,
+        *bal,
+        *SERVER_PK,
+        TX.lock().unwrap().as_ref().unwrap(),
+    );
 
-	let tx_json = tx::tx_json(&update_tx);
+    let tx_json = tx::tx_json(&update_tx);
 
     Json(json!({
         "token": token.to_string(),
-		"update_tx": tx_json,
+        "update_tx": tx_json,
     }))
 }
