@@ -10,7 +10,7 @@ function Bar({ totalAmount, ourAmount }) {
     }}>
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
+        flexDirection: 'column',
         marginBottom: '8px',
         fontSize: '14px',
         color: '#666'

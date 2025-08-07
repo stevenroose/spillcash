@@ -161,11 +161,13 @@ function App() {
             style={{
               width: '100%',
               maxWidth: '600px',
+              height: '150px',
               padding: '15px',
               fontSize: '16px',
               border: '2px solid #ccc',
               borderRadius: '8px',
-              alignSelf: 'center'
+              alignSelf: 'center',
+              resize: 'vertical'
             }}
           />
           <button 
