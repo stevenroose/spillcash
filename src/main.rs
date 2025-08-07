@@ -1,6 +1,8 @@
 use crate::cashu::{get_token, mint};
 
 mod cashu;
+mod tx;
+mod musig;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
