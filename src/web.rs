@@ -55,8 +55,11 @@ async fn submit_tx(Json(payload): Json<TxRequest>) -> Json<serde_json::Value> {
     let mut tx = TX.lock().unwrap();
     *tx = Some(parsed.clone());
 
-    *CHANNEL_AMT.lock().unwrap() = parsed.output[0].value;
-    *CHANNEL_BALANCE.lock().unwrap() = parsed.output[0].value;
+	let spk = tx::create_spk(*SERVER_PK, USER_KEY.public_key());
+	let output_idx = parsed.output.iter().position(|o| o.script_pubkey == spk).unwrap();
+
+    *CHANNEL_AMT.lock().unwrap() = parsed.output[output_idx].value;
+    *CHANNEL_BALANCE.lock().unwrap() = parsed.output[output_idx].value;
 
     Json(json!({
         "status": "success",

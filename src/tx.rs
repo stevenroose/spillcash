@@ -1,4 +1,5 @@
 use bitcoin::secp256k1::{self, Keypair, Message, PublicKey, XOnlyPublicKey};
+use bitcoin::taproot::TaprootSpendInfo;
 use bitcoin::{
     Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf, Sequence, Transaction,
     TxIn, TxOut, Witness, absolute, opcodes, sighash, taproot,
@@ -33,17 +34,24 @@ pub fn multisig(server: PublicKey, user: PublicKey) -> ScriptBuf {
         .into_script()
 }
 
-pub fn create_address(server: PublicKey, user: PublicKey) -> Address {
+pub fn create_taproot(server: PublicKey, user: PublicKey) -> TaprootSpendInfo {
     let agg_pk = musig::combine_keys([user, server]);
-    let taproot = taproot::TaprootBuilder::new()
+    taproot::TaprootBuilder::new()
         .add_leaf(1, delayed_sign(EXPIRY, user.into()))
         .unwrap()
         .add_leaf(1, multisig(server, user))
         .unwrap()
         .finalize(&SECP, agg_pk)
-        .unwrap();
+        .unwrap()
+}
 
-    Address::p2tr_tweaked(taproot.output_key(), Network::Regtest)
+pub fn create_spk(server: PublicKey, user: PublicKey) -> ScriptBuf {
+	let tr = create_taproot(server, user);
+	ScriptBuf::new_p2tr_tweaked(tr.output_key())
+}
+
+pub fn create_address(server: PublicKey, user: PublicKey) -> Address {
+	Address::p2tr_tweaked(create_taproot(server, user).output_key(), Network::Regtest)
 }
 
 pub fn update(
