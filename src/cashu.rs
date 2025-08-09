@@ -9,6 +9,7 @@ use cdk::Amount;
 use cdk::amount::SplitTarget;
 use cdk::nuts::nut00::ProofsMethods;
 use cdk::nuts::{CurrencyUnit, MintQuoteState};
+use cdk::wallet::MintQuote;
 use cdk::wallet::Wallet;
 use rand::random;
 
@@ -21,12 +22,11 @@ fn get_work_dir() -> String {
         .to_string()
 }
 
-async fn get_wallet() -> Result<Wallet> {
+async fn get_wallet(mint_url: &str) -> Result<Wallet> {
     // Generate a random seed for the wallet
     let seed = random::<[u8; 64]>();
 
-    // Mint URL and currency unit
-    let mint_url = "https://fake.thesimplekid.dev";
+    // Currency unit
     let unit = CurrencyUnit::Sat;
 
     // Initialize the memory store
@@ -42,47 +42,65 @@ async fn get_wallet() -> Result<Wallet> {
     )?)
 }
 
-pub async fn mint(amount: Option<u64>) -> Result<()> {
-    let wallet = get_wallet().await?;
+pub async fn create_mint_quote(amount: Option<u64>, mint_url: &str) -> Result<MintQuote> {
+    let wallet = get_wallet(mint_url).await?;
+
     // Request a mint quote from the wallet
     let quote = wallet
         .mint_quote(amount.map(Amount::from).unwrap_or(1000.into()), None)
         .await?;
 
-    // Check the quote state in a loop with a timeout
-    let timeout = Duration::from_secs(60); // Set a timeout duration
+    Ok(quote)
+}
+
+pub async fn complete_mint(quote_id: &str, mint_url: &str) -> Result<u64> {
+    let wallet = get_wallet(mint_url).await?;
+
+    // Check the quote state with a shorter timeout for immediate feedback
+    let timeout = Duration::from_secs(30); // 30 second timeout for immediate check
     let start = std::time::Instant::now();
 
     loop {
-        let status = wallet.mint_quote_state(&quote.id).await?;
+        let status = wallet.mint_quote_state(quote_id).await?;
 
         if status.state == MintQuoteState::Paid {
             break;
         }
 
         if start.elapsed() >= timeout {
-            eprintln!("Timeout while waiting for mint quote to be paid");
-            bail!("Timeout while waiting for mint quote to be paid");
+            eprintln!("Payment not found yet - the invoice may not have been paid");
+            bail!("Payment not found yet - the invoice may not have been paid");
         }
 
         println!("Quote state: {}", status.state);
 
-        sleep(Duration::from_secs(5)).await;
+        sleep(Duration::from_secs(2)).await;
     }
 
     // Mint the received amount
-    let proofs = wallet.mint(&quote.id, SplitTarget::default(), None).await?;
+    let proofs = wallet.mint(quote_id, SplitTarget::default(), None).await?;
     let receive_amount = proofs.total_amount()?;
     println!("Minted {}", receive_amount);
+
+    Ok(receive_amount.into())
+}
+
+pub async fn mint(amount: Option<u64>, mint_url: &str) -> Result<()> {
+    let quote = create_mint_quote(amount, mint_url).await?;
+    println!("Payment request: {}", quote.request);
+    println!("Please pay the invoice to continue...");
+
+    let minted_amount = complete_mint(&quote.id, mint_url).await?;
+    println!("Successfully minted {} sats", minted_amount);
 
     Ok(())
 }
 
-pub async fn get_token(amount: u64) -> Result<String> {
-    let wallet = get_wallet().await?;
+pub async fn get_token(amount: u64, mint_url: &str) -> Result<String> {
+    let wallet = get_wallet(mint_url).await?;
 
     if wallet.total_balance().await? < amount.into() {
-        mint(Some(amount)).await?;
+        mint(Some(amount), mint_url).await?;
     }
 
     let prep_send = wallet
@@ -92,4 +110,10 @@ pub async fn get_token(amount: u64) -> Result<String> {
     let token = wallet.send(prep_send, None).await?;
 
     Ok(token.to_string())
+}
+
+pub async fn get_balance(mint_url: &str) -> Result<u64> {
+    let wallet = get_wallet(mint_url).await?;
+    let balance = wallet.total_balance().await?;
+    Ok(balance.into())
 }
